@@ -97,14 +97,17 @@ export function getOldestVersions(
 
       const versions = result.repository.packages.edges[0].node.versions.edges
 
+      /* //DJE - Ignoring if they want to clear out everything
       if (versions.length !== numVersions) {
         console.log(
           `number of versions requested was: ${numVersions}, but found: ${versions.length}`
         )
       }
+      */
 
       return versions
         .map(value => ({id: value.node.id, version: value.node.version}))
+        .filter(value => value.version !== 'latest') //DJE - never consider latest old
         .reverse()
     })
   )
