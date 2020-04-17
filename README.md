@@ -8,6 +8,7 @@ This action deletes versions of a package from [GitHub Packages](https://github.
 * Delete multiple versions
 * Delete specific version(s) 
 * Delete oldest version(s)
+* Keep a certain number of packages 
 * Delete version(s) of a package that is hosted in the same repo that is executing the workflow
 * Delete version(s) of a package that is hosted in a different repo than the one executing the workflow
 
@@ -56,8 +57,8 @@ This action deletes versions of a package from [GitHub Packages](https://github.
 * [Delete oldest version of a package hosted in the same repo as the workflow](#delete-oldest-version-of-a-package-hosted-in-the-same-repo-as-the-workflow)
 * [Delete oldest x number of versions of a package hosted in the same repo as the workflow](#delete-oldest-x-number-of-versions-of-a-package-hosted-in-the-same-repo-as-the-workflow)
 * [Delete oldest x number of versions of a package hosted in a different repo than the workflow](#delete-oldest-x-number-of-versions-of-a-package-hosted-in-a-different-repo-than-the-workflow)
-
 ### Delete a specific version of a package hosted in the same repo as the workflow
+* [Keep X number of packages and delete the resti n the same repo as the workflow](#keep-x-number-of-versions-of-a-package-hosted-in-the-same-repo-as-the-workflow)
 
 To delete a specific version of a package that is hosted in the same repo as the one executing the workflow the __package-version-ids__ input is required.
 
@@ -177,6 +178,22 @@ Delete the oldest 3 version of a package hosted in the same repo as the workflow
 
 <br>
 
+### Keep x number of versions of a package hosted in the same repo as the workflow
+
+To only keep x number of old versions around of  package hosted in the same repo that is executing the workflow the __package-name__, and __num-old-versions-to-keep inputs are required.
+
+__Example__
+
+Delete all but the 3 newest versions of a package hosted in the same repo as the workflow
+It also always ignores latest
+
+```yaml
+- uses: r26d/delete-package-versions@v1.0.6
+  with:
+    package-name: 'test-package'
+    num-old-versions-to-keep: 3
+```
+ <br>
 ### Delete oldest x number of versions of a package hosted in a different repo than the workflow
 
 To delete the oldest x number of versions of a package hosted in a different repo than the one executing the workflow the __package-name__, __num-old-versions-to-delete__, __owner__, __repo__, and __token__ inputs are required.

@@ -4605,6 +4605,7 @@ function getActionInput() {
         repo: core_1.getInput('repo') ? core_1.getInput('repo') : github_1.context.repo.repo,
         packageName: core_1.getInput('package-name'),
         numOldVersionsToDelete: Number(core_1.getInput('num-old-versions-to-delete')),
+        numOldVersionsToKeep: Number(core_1.getInput('num-old-versions-to-keep')),
         token: core_1.getInput('token')
     });
 }
@@ -14010,6 +14011,7 @@ const defaultParams = {
     repo: '',
     packageName: '',
     numOldVersionsToDelete: 0,
+    numOldVersionsToKeep: 0,
     token: ''
 };
 class Input {
@@ -14020,13 +14022,14 @@ class Input {
         this.repo = validatedParams.repo;
         this.packageName = validatedParams.packageName;
         this.numOldVersionsToDelete = validatedParams.numOldVersionsToDelete;
+        this.numOldVersionsToKeep = validatedParams.numOldVersionsToKeep;
         this.token = validatedParams.token;
     }
     hasOldestVersionQueryInfo() {
         return !!(this.owner &&
             this.repo &&
             this.packageName &&
-            this.numOldVersionsToDelete > 0 &&
+            (this.numOldVersionsToDelete > 0 || this.numOldVersionsToKeep > 0) &&
             this.token);
     }
 }
@@ -15810,7 +15813,7 @@ function getVersionIds(input) {
         return rxjs_1.of(input.packageVersionIds);
     }
     if (input.hasOldestVersionQueryInfo()) {
-        return version_1.getOldestVersions(input.owner, input.repo, input.packageName, input.numOldVersionsToDelete, input.token).pipe(operators_1.map(versionInfo => versionInfo.map(info => info.id)));
+        return version_1.getOldestVersions(input.owner, input.repo, input.packageName, input.numOldVersionsToDelete, input.numOldVersionsToKeep, input.token).pipe(operators_1.map(versionInfo => versionInfo.map(info => info.id)));
     }
     return rxjs_1.throwError("Could not get packageVersionIds. Explicitly specify using the 'package-version-ids' input or provide the 'package-name' and 'num-old-versions-to-delete' inputs to dynamically retrieve oldest versions");
 }
@@ -15819,7 +15822,7 @@ function deleteVersions(input) {
     if (!input.token) {
         return rxjs_1.throwError('No token found');
     }
-    if (input.numOldVersionsToDelete <= 0) {
+    if (input.numOldVersionsToDelete <= 0 && input.numOldVersionsToKeep <= 0) {
         console.log('Number of old versions to delete input is 0 or less, no versions will be deleted');
         return rxjs_1.of(true);
     }
@@ -16152,13 +16155,13 @@ const graphql_1 = __webpack_require__(898);
 const rxjs_1 = __webpack_require__(931);
 const operators_1 = __webpack_require__(43);
 const query = `
-  query getVersions($owner: String!, $repo: String!, $package: String!, $last: Int!) {
+  query getVersions($owner: String!, $repo: String!, $package: String!, $last: Int, $first: Int) {
     repository(owner: $owner, name: $repo) {
       packages(first: 1, names: [$package]) {
         edges {
           node {
             name
-            versions(last: $last) {
+            versions(last: $last, first: $first) {
               edges {
                 node {
                   id
@@ -16171,12 +16174,21 @@ const query = `
       }
     }
   }`;
-function queryForOldestVersions(owner, repo, packageName, numVersions, token) {
+function queryForOldestVersions(owner, repo, packageName, numVersions, numVersionsToKeep, token) {
+    let last = null;
+    let first = null;
+    if (numVersionsToKeep > 0) {
+        first = numVersionsToKeep;
+    }
+    else {
+        last = numVersions;
+    }
     return rxjs_1.from(graphql_1.graphql(query, {
         owner,
         repo,
         package: packageName,
-        last: numVersions,
+        last,
+        first,
         headers: {
             authorization: `token ${token}`,
             Accept: 'application/vnd.github.packages-preview+json'
@@ -16189,8 +16201,8 @@ function queryForOldestVersions(owner, repo, packageName, numVersions, token) {
     }));
 }
 exports.queryForOldestVersions = queryForOldestVersions;
-function getOldestVersions(owner, repo, packageName, numVersions, token) {
-    return queryForOldestVersions(owner, repo, packageName, numVersions, token).pipe(operators_1.map(result => {
+function getOldestVersions(owner, repo, packageName, numVersions, numVersionsToKeep, token) {
+    return queryForOldestVersions(owner, repo, packageName, numVersions, numVersionsToKeep, token).pipe(operators_1.map(result => {
         if (result.repository.packages.edges.length < 1) {
             rxjs_1.throwError(`package: ${packageName} not found for owner: ${owner} in repo: ${repo}`);
         }

@@ -24,13 +24,13 @@ export interface GetVersionsQueryResponse {
 }
 
 const query = `
-  query getVersions($owner: String!, $repo: String!, $package: String!, $last: Int!) {
+  query getVersions($owner: String!, $repo: String!, $package: String!, $last: Int, $first: Int) {
     repository(owner: $owner, name: $repo) {
       packages(first: 1, names: [$package]) {
         edges {
           node {
             name
-            versions(last: $last) {
+            versions(last: $last, first: $first) {
               edges {
                 node {
                   id
@@ -49,14 +49,23 @@ export function queryForOldestVersions(
   repo: string,
   packageName: string,
   numVersions: number,
+  numVersionsToKeep: number,
   token: string
 ): Observable<GetVersionsQueryResponse> {
+  let last = null
+  let first = null
+  if (numVersionsToKeep > 0) {
+    first = numVersionsToKeep
+  } else {
+    last = numVersions
+  }
   return from(
     graphql(query, {
       owner,
       repo,
       package: packageName,
-      last: numVersions,
+      last,
+      first,
       headers: {
         authorization: `token ${token}`,
         Accept: 'application/vnd.github.packages-preview+json'
@@ -79,6 +88,7 @@ export function getOldestVersions(
   repo: string,
   packageName: string,
   numVersions: number,
+  numVersionsToKeep: number,
   token: string
 ): Observable<VersionInfo[]> {
   return queryForOldestVersions(
@@ -86,6 +96,7 @@ export function getOldestVersions(
     repo,
     packageName,
     numVersions,
+    numVersionsToKeep,
     token
   ).pipe(
     map(result => {
