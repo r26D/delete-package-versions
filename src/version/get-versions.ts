@@ -56,7 +56,7 @@ export function queryForOldestVersions(
       owner,
       repo,
       package: packageName,
-      numVersions,
+      last: numVersions,
       headers: {
         authorization: `token ${token}`,
         Accept: 'application/vnd.github.packages-preview+json'

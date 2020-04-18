@@ -16179,7 +16179,7 @@ function queryForOldestVersions(owner, repo, packageName, numVersions, token) {
         owner,
         repo,
         package: packageName,
-        numVersions,
+        last: numVersions,
         headers: {
             authorization: `token ${token}`,
             Accept: 'application/vnd.github.packages-preview+json'
