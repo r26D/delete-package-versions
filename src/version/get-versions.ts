@@ -24,13 +24,13 @@ export interface GetVersionsQueryResponse {
 }
 
 const query = `
-  query getVersions($owner: String!, $repo: String!, $package: String!, $last: Int, $first: Int) {
+  query getVersions($owner: String!, $repo: String!, $package: String!, $last: Int!) {
     repository(owner: $owner, name: $repo) {
       packages(first: 1, names: [$package]) {
         edges {
           node {
             name
-            versions(last: $last, first: $first) {
+            versions(last: $last) {
               edges {
                 node {
                   id
@@ -49,22 +49,14 @@ export function queryForOldestVersions(
   repo: string,
   packageName: string,
   numVersions: number,
-  numVersionsToKeep: number,
   token: string
 ): Observable<GetVersionsQueryResponse> {
-  let last = null
-  let first = null
-  if (numVersionsToKeep > 0) {
-    first = numVersionsToKeep
-  } else {
-    last = numVersions
-  }
   return from(
     graphql(query, {
       owner,
       repo,
       package: packageName,
-      last,
+      numVersions,
       first,
       headers: {
         authorization: `token ${token}`,
@@ -91,12 +83,17 @@ export function getOldestVersions(
   numVersionsToKeep: number,
   token: string
 ): Observable<VersionInfo[]> {
+  let last = null
+  if (numVersionsToKeep > 0) {
+    last = 10000;
+  } else {
+    last = numVersions
+  }
   return queryForOldestVersions(
     owner,
     repo,
     packageName,
-    numVersions,
-    numVersionsToKeep,
+    last,
     token
   ).pipe(
     map(result => {
@@ -115,7 +112,9 @@ export function getOldestVersions(
         )
       }
       */
-
+      if (numVersionsToKeep > 0) {
+        versions.slice(0, numVersionsToKeep)
+      }
       return versions
         .map(value => ({id: value.node.id, version: value.node.version}))
         .filter(value => value.version !== 'latest') //DJE - never consider latest old
