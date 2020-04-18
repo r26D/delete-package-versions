@@ -108,7 +108,7 @@ export function getOldestVersions(
       versions.map(value => console.log(`Original ${value.node}`))
       if (numVersionsToKeep > 0) {
         console.log(`Going to keep ${numVersionsToKeep}`)
-        versions.slice(0, numVersionsToKeep)
+        versions.splice(0, numVersionsToKeep)
       }
       versions.map(value => console.log(`After ${value.node}`))
       return versions
