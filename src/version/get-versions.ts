@@ -84,7 +84,7 @@ export function getOldestVersions(
 ): Observable<VersionInfo[]> {
   let last = null
   if (numVersionsToKeep > 0) {
-    last = 10000
+    last = 100
   } else {
     last = numVersions
   }
