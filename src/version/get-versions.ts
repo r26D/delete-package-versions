@@ -107,10 +107,10 @@ export function getOldestVersions(
       */
       versions.map(value => console.log(`Original ${value.node}`))
       if (numVersionsToKeep > 0) {
-        console.log(`Going to keep ${numVersionsToKeep}`)
+        //        console.log(`Going to keep ${numVersionsToKeep}`)
         versions.splice(0, numVersionsToKeep)
       }
-      versions.map(value => console.log(`After ${value.node}`))
+      //     versions.map(value => console.log(`After ${value.node}`))
       return versions
         .map(value => ({id: value.node.id, version: value.node.version}))
         .filter(value => value.version !== 'latest') //DJE - never consider latest old
