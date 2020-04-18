@@ -57,7 +57,6 @@ export function queryForOldestVersions(
       repo,
       package: packageName,
       numVersions,
-      first,
       headers: {
         authorization: `token ${token}`,
         Accept: 'application/vnd.github.packages-preview+json'
@@ -85,17 +84,11 @@ export function getOldestVersions(
 ): Observable<VersionInfo[]> {
   let last = null
   if (numVersionsToKeep > 0) {
-    last = 10000;
+    last = 10000
   } else {
     last = numVersions
   }
-  return queryForOldestVersions(
-    owner,
-    repo,
-    packageName,
-    last,
-    token
-  ).pipe(
+  return queryForOldestVersions(owner, repo, packageName, last, token).pipe(
     map(result => {
       if (result.repository.packages.edges.length < 1) {
         throwError(
@@ -112,9 +105,12 @@ export function getOldestVersions(
         )
       }
       */
+      versions.map(value => console.log(`Original ${value.node}`))
       if (numVersionsToKeep > 0) {
+        console.log(`Going to keep ${numVersionsToKeep}`)
         versions.slice(0, numVersionsToKeep)
       }
+      versions.map(value => console.log(`After ${value.node}`))
       return versions
         .map(value => ({id: value.node.id, version: value.node.version}))
         .filter(value => value.version !== 'latest') //DJE - never consider latest old

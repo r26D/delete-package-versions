@@ -16155,13 +16155,13 @@ const graphql_1 = __webpack_require__(898);
 const rxjs_1 = __webpack_require__(931);
 const operators_1 = __webpack_require__(43);
 const query = `
-  query getVersions($owner: String!, $repo: String!, $package: String!, $last: Int, $first: Int) {
+  query getVersions($owner: String!, $repo: String!, $package: String!, $last: Int!) {
     repository(owner: $owner, name: $repo) {
       packages(first: 1, names: [$package]) {
         edges {
           node {
             name
-            versions(last: $last, first: $first) {
+            versions(last: $last) {
               edges {
                 node {
                   id
@@ -16174,21 +16174,12 @@ const query = `
       }
     }
   }`;
-function queryForOldestVersions(owner, repo, packageName, numVersions, numVersionsToKeep, token) {
-    let last = null;
-    let first = null;
-    if (numVersionsToKeep > 0) {
-        first = numVersionsToKeep;
-    }
-    else {
-        last = numVersions;
-    }
+function queryForOldestVersions(owner, repo, packageName, numVersions, token) {
     return rxjs_1.from(graphql_1.graphql(query, {
         owner,
         repo,
         package: packageName,
-        last,
-        first,
+        numVersions,
         headers: {
             authorization: `token ${token}`,
             Accept: 'application/vnd.github.packages-preview+json'
@@ -16202,7 +16193,14 @@ function queryForOldestVersions(owner, repo, packageName, numVersions, numVersio
 }
 exports.queryForOldestVersions = queryForOldestVersions;
 function getOldestVersions(owner, repo, packageName, numVersions, numVersionsToKeep, token) {
-    return queryForOldestVersions(owner, repo, packageName, numVersions, numVersionsToKeep, token).pipe(operators_1.map(result => {
+    let last = null;
+    if (numVersionsToKeep > 0) {
+        last = 10000;
+    }
+    else {
+        last = numVersions;
+    }
+    return queryForOldestVersions(owner, repo, packageName, last, token).pipe(operators_1.map(result => {
         if (result.repository.packages.edges.length < 1) {
             rxjs_1.throwError(`package: ${packageName} not found for owner: ${owner} in repo: ${repo}`);
         }
@@ -16214,6 +16212,12 @@ function getOldestVersions(owner, repo, packageName, numVersions, numVersionsToK
           )
         }
         */
+        versions.map(value => console.log(`Original ${value.node}`));
+        if (numVersionsToKeep > 0) {
+            console.log(`Going to keep ${numVersionsToKeep}`);
+            versions.slice(0, numVersionsToKeep);
+        }
+        versions.map(value => console.log(`After ${value.node}`));
         return versions
             .map(value => ({ id: value.node.id, version: value.node.version }))
             .filter(value => value.version !== 'latest') //DJE - never consider latest old
