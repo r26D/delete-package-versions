@@ -16212,7 +16212,6 @@ function getOldestVersions(owner, repo, packageName, numVersions, numVersionsToK
           )
         }
         */
-        versions.map(value => console.log(`Original ${value.node}`));
         if (numVersionsToKeep > 0) {
             //        console.log(`Going to keep ${numVersionsToKeep}`)
             versions.splice(0, numVersionsToKeep);
